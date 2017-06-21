@@ -5,9 +5,10 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <memory.h>
+#include "check.h"
 
 int main() {
-
+    printf("%d\n",check_end());
     char buf[1024] = {};
     int fd,n,val;
     fd = open("test",O_RDWR);
