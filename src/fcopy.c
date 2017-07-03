@@ -1,15 +1,14 @@
 //
-// Created by parallels on 6/22/17.
+// Created by parallels on 6/23/17.
 //
 
+#include "fcopy.h"
 #include <unistd.h>
 #include <memory.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#include "copy.h"
-
 #define COPY_CLINET_BUFF_SIZE   1024
 #define COPY_FILE_BUFF_SIZE     1024
 
@@ -20,31 +19,26 @@
 
 /* this is a command to copy file
  * */
-void cliCopyFile(){
-    ssize_t size;
+void fcliCopyFile(){
 
-    char cmd[COPY_CLINET_BUFF_SIZE] = {};
-    while(1){
+    char buf[COPY_CLINET_BUFF_SIZE];
 
-        printf("please input the filename to copy,quit to leave!\n");
-        size = read(STDIN_FILENO,cmd,COPY_CLINET_BUFF_SIZE);
-
-        if(size <= 0)
-            continue;
-        int n = strlen(cmd);
-        cmd[n-1] = '\0';
-
-        if (strcmp(cmd, "quit") == 0){
+    printf("please input the filename to copy,quit to leave!\n");
+    while(fgets(buf,COPY_CLINET_BUFF_SIZE,stdin) != NULL){
+        int len = strlen(buf);
+        buf[len-1] = '\0';
+        if (strcmp(buf, "quit") == 0){
             exit(EXIT_SUCCESS);
         }else
-            copyFile(cmd);
+            fcopyFile(buf);
     }
+
 }
 
 
 /* copy file by finename,new file will be created by the name of filename+ "_copy"
  * */
-void copyFile(char* filename){
+void fcopyFile(char* filename){
     //verify file
     struct stat state;
     if(lstat(filename,&state) < 0){
@@ -59,8 +53,8 @@ void copyFile(char* filename){
 
     char buf[COPY_FILE_BUFF_SIZE];
 
-    int src = open(filename,O_RDONLY);
-    if(src < 0){
+    FILE* src = fopen(filename,"r");
+    if(src == NULL){
         perror("open src file error!");
         return;
     }
@@ -68,21 +62,23 @@ void copyFile(char* filename){
     char str[100];
     strcpy(str,filename);
 
-    int des = open(strcat(str,"_copy"),O_RDWR|O_CREAT,S_IRUSR|S_IWUSR);
-    if(des < 0){
-        close(src);
+    FILE* des = fopen(strcat(str,"_copy"),"w");
+    if(des == NULL){
+        fclose(src);
         perror("open des file error!");
         return;
     }
 
     int real,all = 0;
-    while((real = read(src,buf,COPY_FILE_BUFF_SIZE)) > 0){
-        write(des,buf,real);
+    while((real = fread(buf,sizeof(char),COPY_FILE_BUFF_SIZE,src))){
+        fwrite(buf,sizeof(char),real,des);
         all+=real;
+        if(real != COPY_FILE_BUFF_SIZE)
+            break;
     }
 
-    close(des);
-    close(src);
+    fclose(des);
+    fclose(src);
 
     printf("read completed! %d bytes is done!\n",all);
 }

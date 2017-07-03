@@ -1,9 +1,9 @@
-#include "copy.h"
+#include "fcopy.h"
 
 
 int main() {
 
-    cliCopyFile();
+    fcliCopyFile();
 
     return 0;
 }
